@@ -1,0 +1,3 @@
+# Require dispensers to be upgraded before they can interact with BreweryX cauldrons.
+# Sneak-right-click a dispenser with any hoe to upgrade it.
+enable-dispenser-upgrade: false

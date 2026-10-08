@@ -1,0 +1,7 @@
+name: CauldronInteract
+version: 1.4.0
+api-version: 1.17
+authors: [VoxCrafter_LP, savagetricycle]
+main: com.voxcrafterlp.cauldroninteract.CauldronInteract
+description: Adds dispenser cauldron interactions and hopper distillation for BreweryX
+softdepend: [BreweryX]
