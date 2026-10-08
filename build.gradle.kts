@@ -33,7 +33,7 @@ java {
 
 tasks.jar {
     archiveBaseName.set("CauldronInteract")
-    from("LICENSE", "README.md") {
+    from(files("LICENSE", "README.md")) {
         into("META-INF")
     }
 }
