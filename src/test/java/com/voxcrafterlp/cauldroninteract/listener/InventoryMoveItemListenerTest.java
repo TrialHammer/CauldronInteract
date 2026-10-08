@@ -3,11 +3,14 @@ package com.voxcrafterlp.cauldroninteract.listener;
 import com.voxcrafterlp.cauldroninteract.CauldronInteract;
 import com.voxcrafterlp.cauldroninteract.utils.BreweryIntegration;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Registry;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BrewingStand;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.BrewerInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import org.mockito.MockMakers;
 
 import java.util.HashSet;
 
@@ -39,6 +43,9 @@ class InventoryMoveItemListenerTest {
     void setUp() {
         bukkit = mockStatic(Bukkit.class);
         bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
+        // InventoryType initializes MenuType through Bukkit's server registries.
+        bukkit.when(() -> Bukkit.getRegistry(any())).thenAnswer(call ->
+                mock(Registry.class, withSettings().mockMaker(MockMakers.PROXY)));
         brewery = mockStatic(BreweryIntegration.class);
         when(plugin.getBlockedInventories()).thenReturn(new HashSet<>());
         when(inventory.getHolder()).thenReturn(stand);
@@ -76,6 +83,54 @@ class InventoryMoveItemListenerTest {
         listener.onBrewerInput(event);
         event.setCancelled(true);
         pendingTask().run();
+        brewery.verifyNoInteractions();
+    }
+
+    @Test
+    void brewingStandHolderIsRecognizedThroughGenericInventoryWrapper() {
+        Inventory wrapped = mock(Inventory.class);
+        when(wrapped.getHolder()).thenReturn(stand);
+        listener.onBrewerInput(new InventoryMoveItemEvent(hopper, new ItemStack(Material.POTION), wrapped, true));
+
+        pendingTask().run();
+
+        brewery.verify(() -> BreweryIntegration.startDistillation(stand));
+    }
+
+    @Test
+    void brewingInventoryWithoutHolderIsLocatedFromItsWorldPosition() {
+        Inventory wrapped = mock(Inventory.class);
+        Location location = mock(Location.class);
+        InventoryType brewing = InventoryType.BREWING;
+        when(wrapped.getType()).thenReturn(brewing);
+        when(wrapped.getLocation()).thenReturn(location);
+        when(location.getBlock()).thenReturn(block);
+        listener.onBrewerInput(new InventoryMoveItemEvent(hopper, new ItemStack(Material.POTION), wrapped, true));
+
+        pendingTask().run();
+
+        brewery.verify(() -> BreweryIntegration.startDistillation(stand));
+    }
+
+    @Test
+    void cancelledFirstTransferDoesNotSuppressAnotherSuccessfulInputInSameTick() {
+        InventoryMoveItemEvent first = input(Material.POTION);
+        listener.onBrewerInput(first);
+        listener.onBrewerInput(input(Material.GLOWSTONE_DUST));
+        first.setCancelled(true);
+
+        pendingTask().run();
+
+        brewery.verify(() -> BreweryIntegration.startDistillation(stand));
+    }
+
+    @Test
+    void unloadedChunkDoesNotStartDistillation() {
+        listener.onBrewerInput(input(Material.POTION));
+        when(block.getWorld().isChunkLoaded(anyInt(), anyInt())).thenReturn(false);
+
+        pendingTask().run();
+
         brewery.verifyNoInteractions();
     }
 

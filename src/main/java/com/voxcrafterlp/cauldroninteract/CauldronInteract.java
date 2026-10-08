@@ -1,6 +1,7 @@
 package com.voxcrafterlp.cauldroninteract;
 
 import com.voxcrafterlp.cauldroninteract.listener.BlockDispenseListener;
+import com.voxcrafterlp.cauldroninteract.listener.DistillationListener;
 import com.voxcrafterlp.cauldroninteract.listener.InventoryMoveItemListener;
 import com.voxcrafterlp.cauldroninteract.listener.PlayerInteractListener;
 import org.bukkit.NamespacedKey;
@@ -24,6 +25,9 @@ public class CauldronInteract extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new BlockDispenseListener(this), this);
         getServer().getPluginManager().registerEvents(new InventoryMoveItemListener(this), this);
+        DistillationListener distillation = new DistillationListener(this);
+        getServer().getPluginManager().registerEvents(distillation, this);
+        distillation.startWatching();
         if (dispenserUpgradeEnabled) {
             getServer().getPluginManager().registerEvents(new PlayerInteractListener(this), this);
         }

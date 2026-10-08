@@ -21,7 +21,7 @@ CauldronInteract 是一个面向 [BreweryX](https://github.com/BreweryTeam/Brewe
 ## 安装
 
 1. 按照[构建说明](#构建)生成插件 JAR。
-2. 将 `build/libs/CauldronInteract-1.4.0-RELEASE.jar` 放入已安装 BreweryX 的服务器的 `plugins/` 目录。
+2. 将 `build/libs/CauldronInteract-1.4.1-RELEASE.jar` 放入已安装 BreweryX 的服务器的 `plugins/` 目录。
 3. 重启服务器，首次启动会生成 `plugins/CauldronInteract/config.yml`。
 4. 按需修改配置，再重启服务器使其生效。
 
@@ -31,7 +31,7 @@ CauldronInteract 是一个面向 [BreweryX](https://github.com/BreweryTeam/Brewe
 
 - 加水时，炼药锅会补满至 3 格，空桶掉落在发射器下方；炼药锅已满时，水桶留在发射器中。补水会清除炼药锅中已有的 BreweryX 酒液数据。
 - 装瓶仅适用于 BreweryX 已记录的炼药锅。酒液和投料后返还的空容器放回发射器，空间不足时掉落在其下方。
-- 蒸馏时，使用漏斗向酿造台输入物品。酿造台中具备可蒸馏的酒液和荧石粉后，插件会尝试启动蒸馏。
+- 蒸馏时，在普通酿造台的原料槽中放入荧石粉，再通过漏斗向瓶槽输入饮品。插件每 0.5 秒检查已加载的酿造台，具备可蒸馏的酒液和荧石粉后自动启动 BreweryX 蒸馏，保留原有动画和计时。
 
 本版本专注于 BreweryX 自动酿造，不包含上游的智能发射器和自动取岩浆功能。
 

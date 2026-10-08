@@ -2,9 +2,11 @@ package com.voxcrafterlp.cauldroninteract.utils;
 
 import com.dre.brewery.BDistiller;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BrewingStand;
 import org.bukkit.inventory.BrewerInventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +35,9 @@ class BreweryIntegrationTest {
         when(manager.getPlugin("BreweryX")).thenReturn(breweryPlugin);
         when(breweryPlugin.isEnabled()).thenReturn(true);
         when(stand.getBlock()).thenReturn(block);
-        when(stand.getInventory()).thenReturn(mock(BrewerInventory.class));
+        BrewerInventory inventory = mock(BrewerInventory.class);
+        when(inventory.getIngredient()).thenReturn(new ItemStack(Material.GLOWSTONE_DUST));
+        when(stand.getInventory()).thenReturn(inventory);
         when(stand.getFuelLevel()).thenReturn(7);
     }
 
@@ -54,6 +58,14 @@ class BreweryIntegrationTest {
     @Test
     void ordinaryPotionsDoNotStartCustomDistillation() {
         BDistiller.brewState = 0;
+        BreweryIntegration.startDistillation(stand);
+        assertFalse(BDistiller.isTrackingDistiller(block));
+        assertEquals(0, BDistiller.starts);
+    }
+
+    @Test
+    void missingGlowstoneDoesNotStartTimer() {
+        when(stand.getInventory().getIngredient()).thenReturn(null);
         BreweryIntegration.startDistillation(stand);
         assertFalse(BDistiller.isTrackingDistiller(block));
         assertEquals(0, BDistiller.starts);

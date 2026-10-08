@@ -1,6 +1,7 @@
 package com.voxcrafterlp.cauldroninteract.utils;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BrewingStand;
 import org.bukkit.inventory.BrewerInventory;
@@ -98,14 +99,18 @@ public final class BreweryIntegration {
      */
     @SuppressWarnings("unchecked")
     public static void startDistillation(BrewingStand stand) {
-        if (!isBreweryEnabled()) return;
+        Plugin brewery = Bukkit.getPluginManager().getPlugin(BREWERY_PLUGIN_NAME);
+        if (brewery == null || !brewery.isEnabled()) return;
 
         try {
-            Class<?> distillerClass = Class.forName(BREWERY_DISTILLER_CLASS);
+            Class<?> distillerClass = Class.forName(
+                    BREWERY_DISTILLER_CLASS, true, brewery.getClass().getClassLoader());
             Block block = stand.getBlock();
             if ((boolean) distillerClass.getMethod("isTrackingDistiller", Block.class).invoke(null, block)) return;
 
             BrewerInventory inventory = stand.getInventory();
+            ItemStack ingredient = inventory.getIngredient();
+            if (ingredient == null || ingredient.getType() != Material.GLOWSTONE_DUST) return;
             Object contents = distillerClass.getMethod("getDistillContents", BrewerInventory.class)
                     .invoke(null, inventory);
             Number hasBrew = (Number) distillerClass.getMethod("hasBrew", BrewerInventory.class, contents.getClass())
@@ -144,6 +149,6 @@ public final class BreweryIntegration {
                 ? exception.getCause()
                 : exception;
         Bukkit.getLogger().log(Level.WARNING,
-                "[CauldronInteract] BreweryX integration could not " + operation + ": " + cause.getMessage());
+                "[CauldronInteract] BreweryX integration could not " + operation, cause);
     }
 }
