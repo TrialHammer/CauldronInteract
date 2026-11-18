@@ -1,11 +1,9 @@
 package com.voxcrafterlp.cauldroninteract.listener;
 
 import com.voxcrafterlp.cauldroninteract.CauldronInteract;
+import com.voxcrafterlp.cauldroninteract.config.PluginSettings;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.Tag;
 import org.bukkit.block.Dispenser;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,6 +15,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+
+import java.util.Map;
 
 public class PlayerInteractListener implements Listener {
 
@@ -32,7 +32,7 @@ public class PlayerInteractListener implements Listener {
         if (event.getClickedBlock().getType() != Material.DISPENSER || !event.getPlayer().isSneaking()) return;
 
         ItemStack hoe = event.getPlayer().getInventory().getItemInMainHand();
-        if (!Tag.ITEMS_HOES.isTagged(hoe.getType())) return;
+        if (!org.bukkit.Tag.ITEMS_HOES.isTagged(hoe.getType())) return;
 
         Dispenser dispenser = (Dispenser) event.getClickedBlock().getState();
         if (dispenser.getPersistentDataContainer().has(plugin.getDispenserUpgradedKey())) return;
@@ -41,16 +41,33 @@ public class PlayerInteractListener implements Listener {
                 plugin.getDispenserUpgradedKey(), PersistentDataType.BYTE, (byte) 1);
         dispenser.update(true);
         playUpgradeEffects(event.getPlayer(), dispenser);
+        if (plugin.getSettings().upgradeMessageEnabled()) {
+            plugin.getMessages().send(event.getPlayer(), "dispenser.upgraded", Map.of());
+        }
         damageHoe(event.getPlayer(), hoe);
     }
 
     private void playUpgradeEffects(Player player, Dispenser dispenser) {
-        player.playSound(dispenser.getLocation(), Sound.ITEM_HONEYCOMB_WAX_ON, 1, 1);
-        player.spawnParticle(Particle.WAX_ON, dispenser.getLocation().add(0.5, 1.1, 0.5), 5);
+        PluginSettings settings = plugin.getSettings();
+        if (settings.soundsEnabled()) {
+            player.playSound(dispenser.getLocation(), settings.upgradeSound(),
+                    settings.upgradeSoundVolume(), settings.upgradeSoundPitch());
+        }
+        if (settings.upgradeParticlesEnabled() && settings.upgradeParticleCount() > 0) {
+            try {
+                org.bukkit.Particle particle = org.bukkit.Particle.valueOf(settings.upgradeParticle());
+                player.spawnParticle(particle,
+                        dispenser.getLocation().add(settings.upgradeParticleOffsetX(),
+                                settings.upgradeParticleOffsetY(), settings.upgradeParticleOffsetZ()),
+                        settings.upgradeParticleCount());
+            } catch (IllegalArgumentException ignored) {
+                plugin.getLogger().warning("Unknown upgrade particle: " + settings.upgradeParticle());
+            }
+        }
     }
 
     private void damageHoe(Player player, ItemStack hoe) {
-        if (player.getGameMode() == GameMode.CREATIVE) return;
+        if (!plugin.getSettings().upgradeConsumeDurability() || player.getGameMode() == GameMode.CREATIVE) return;
 
         ItemMeta itemMeta = hoe.getItemMeta();
         if (!(itemMeta instanceof Damageable damageable)) return;

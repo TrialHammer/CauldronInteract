@@ -1,3 +1,66 @@
-# Require dispensers to be upgraded before they can interact with BreweryX cauldrons.
-# Sneak-right-click a dispenser with any hoe to upgrade it.
-enable-dispenser-upgrade: false
+# CauldronInteract 1.5.0 for Minecraft/Paper 26.3
+# All functional switches and tunables live here. Player-facing text is in messages.yml.
+config-version: 1
+
+features:
+  water-fill:
+    enabled: true
+  bottle-fill:
+    enabled: true
+  ingredient:
+    enabled: true
+  dispenser-upgrade:
+    enabled: false
+    consume-durability: true
+    send-message: true
+  distillation:
+    enabled: true
+    track-chunk-loads: true
+    track-block-place: true
+    check-interval-ticks: 10
+    initial-delay-ticks: 10
+    ingredient-material: GLOWSTONE_DUST
+
+behaviour:
+  # Where items are dropped relative to a dispenser.
+  drop-offset:
+    x: 0.5
+    y: -0.75
+    z: 0.5
+  deferred-inventory-delay-ticks: 1
+  return-empty-containers: true
+  fill-cauldron-to-maximum: true
+  consume-one-water-level-per-bottle: true
+  bucket-suffixes:
+    - "_BUCKET"
+  bottle-materials:
+    - POTION
+    - SPLASH_POTION
+    - LINGERING_POTION
+    - EXPERIENCE_BOTTLE
+    - DRAGON_BREATH
+    - HONEY_BOTTLE
+
+effects:
+  sounds:
+    enabled: true
+    bottle-fill:
+      key: ITEM_BOTTLE_FILL
+      volume: 1.0
+      pitch: 1.0
+    bucket-empty:
+      key: ITEM_BUCKET_EMPTY
+      volume: 1.0
+      pitch: 1.0
+    upgrade:
+      key: ITEM_HONEYCOMB_WAX_ON
+      volume: 1.0
+      pitch: 1.0
+  upgrade-particles:
+    enabled: true
+    particle: WAX_ON
+    count: 5
+    offset:
+      x: 0.5
+      y: 1.1
+      z: 0.5

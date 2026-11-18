@@ -1,0 +1,15 @@
+# All player-facing text for CauldronInteract.
+# Supports legacy '&' colour codes and standard PlaceholderAPI placeholders.
+command:
+  unknown-subcommand: "&c未知子命令。用法：/ci <reload|status>"
+  reload-success: "&a配置与语言文件已重新加载。"
+  reload-failed: "&c配置重载失败：%error%"
+  status-header: "&6CauldronInteract %version% &7状态"
+  status-features: "&e功能：&fwater-fill=%water_fill% &7| &fbottle-fill=%bottle_fill% &7| &fingredient=%ingredient% &7| &fdistillation=%distillation% &7| &fupgrade=%upgrade%"
+  status-brewery: "&eBreweryX：%brewery%"
+  status-enabled: "已启用"
+  status-disabled: "未安装/未启用"
+  status-feature-on: "✔"
+  status-feature-off: "✘"
+dispenser:
+  upgraded: "&a发射器已升级，可以使用炼药锅交互功能。"

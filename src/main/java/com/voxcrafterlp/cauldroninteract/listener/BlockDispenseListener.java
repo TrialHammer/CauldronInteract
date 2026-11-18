@@ -1,10 +1,10 @@
 package com.voxcrafterlp.cauldroninteract.listener;
 
 import com.voxcrafterlp.cauldroninteract.CauldronInteract;
+import com.voxcrafterlp.cauldroninteract.config.PluginSettings;
 import com.voxcrafterlp.cauldroninteract.utils.BreweryIntegration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -32,38 +32,41 @@ public class BlockDispenseListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockDispense(BlockDispenseEvent event) {
         if (event.getBlock().getType() != Material.DISPENSER) return;
-        if (plugin.isDispenserUpgradeEnabled()) {
+        PluginSettings settings = plugin.getSettings();
+        if (settings.dispenserUpgradeEnabled()) {
             Dispenser dispenser = (Dispenser) event.getBlock().getState();
             if (!dispenser.getPersistentDataContainer().has(plugin.getDispenserUpgradedKey())) return;
         }
 
         Block cauldron = getBlockInFront(event.getBlock());
         ItemStack dispensedItem = event.getItem();
-        if (dispensedItem.getType() == Material.WATER_BUCKET
+        if (settings.waterFillEnabled() && dispensedItem.getType() == Material.WATER_BUCKET
                 && (cauldron.getType() == Material.CAULDRON || cauldron.getType() == Material.WATER_CAULDRON)) {
-            fillCauldron(event, cauldron, dispensedItem);
+            fillCauldron(event, cauldron, dispensedItem, settings);
             return;
         }
 
-        if (dispensedItem.getType() == Material.GLASS_BOTTLE) {
+        if (settings.bottleFillEnabled() && dispensedItem.getType() == Material.GLASS_BOTTLE) {
             ItemStack brew = BreweryIntegration.getBrew(cauldron);
             if (brew == null) return;
 
             event.setCancelled(true);
-            removeOneCauldronLevel(cauldron);
-            updateDispenserInventory(event.getBlock(), dispensedItem, brew);
-            cauldron.getWorld().playSound(cauldron.getLocation(), Sound.ITEM_BOTTLE_FILL, 1, 1);
+            if (settings.consumeBottleLevel()) removeOneCauldronLevel(cauldron);
+            updateDispenserInventory(event.getBlock(), dispensedItem, brew, false, settings);
+            playSound(cauldron, settings.bottleFillSound(), settings.bottleFillVolume(), settings.bottleFillPitch());
             return;
         }
 
-        if (cauldron.getType() != Material.WATER_CAULDRON) return;
+        if (!settings.ingredientEnabled() || cauldron.getType() != Material.WATER_CAULDRON) return;
         if (!BreweryIntegration.addIngredientToCauldron(cauldron, dispensedItem)) return;
 
         event.setCancelled(true);
-        updateDispenserInventory(event.getBlock(), dispensedItem, getEmptyContainer(dispensedItem));
+        updateDispenserInventory(event.getBlock(), dispensedItem,
+                settings.returnEmptyContainers() ? getEmptyContainer(dispensedItem, settings) : null, false, settings);
     }
 
-    private void fillCauldron(BlockDispenseEvent dispenseEvent, Block cauldron, ItemStack waterBucket) {
+    private void fillCauldron(BlockDispenseEvent dispenseEvent, Block cauldron, ItemStack waterBucket,
+                              PluginSettings settings) {
         // A full cauldron cannot accept more water; keep the bucket in the dispenser.
         dispenseEvent.setCancelled(true);
         if (cauldron.getBlockData() instanceof Levelled currentData
@@ -72,7 +75,11 @@ public class BlockDispenseListener implements Listener {
         BlockState newState = cauldron.getState();
         newState.setType(Material.WATER_CAULDRON);
         Levelled waterData = (Levelled) newState.getBlockData();
-        waterData.setLevel(waterData.getMaximumLevel());
+        if (settings.fillToMaximum()) {
+            waterData.setLevel(waterData.getMaximumLevel());
+        } else if (waterData.getLevel() < waterData.getMaximumLevel()) {
+            waterData.setLevel(waterData.getLevel() + 1);
+        }
         newState.setBlockData(waterData);
 
         // Fire before updating so BreweryX sees the water increase and clears the
@@ -82,8 +89,14 @@ public class BlockDispenseListener implements Listener {
         Bukkit.getPluginManager().callEvent(levelEvent);
         if (levelEvent.isCancelled() || !levelEvent.getNewState().update(true)) return;
 
-        updateDispenserInventory(dispenseEvent.getBlock(), waterBucket, new ItemStack(Material.BUCKET), true);
-        cauldron.getWorld().playSound(cauldron.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1, 1);
+        updateDispenserInventory(dispenseEvent.getBlock(), waterBucket,
+                settings.returnEmptyContainers() ? new ItemStack(Material.BUCKET) : null, true, settings);
+        playSound(cauldron, settings.bucketEmptySound(), settings.bucketEmptyVolume(), settings.bucketEmptyPitch());
+    }
+
+    private void playSound(Block cauldron, String sound, float volume, float pitch) {
+        if (!plugin.getSettings().soundsEnabled()) return;
+        cauldron.getWorld().playSound(cauldron.getLocation(), sound, volume, pitch);
     }
 
     private Block getBlockInFront(Block dispenser) {
@@ -108,25 +121,18 @@ public class BlockDispenseListener implements Listener {
                 cauldron, null, CauldronLevelChangeEvent.ChangeReason.BOTTLE_FILL, cauldron.getState()));
     }
 
-    private ItemStack getEmptyContainer(ItemStack ingredient) {
+    private ItemStack getEmptyContainer(ItemStack ingredient, PluginSettings settings) {
         Material material = ingredient.getType();
         String materialName = material.name();
-        if (materialName.endsWith("_BUCKET")) return new ItemStack(Material.BUCKET);
-        if (materialName.endsWith("POTION")
-                || material == Material.EXPERIENCE_BOTTLE
-                || material == Material.DRAGON_BREATH
-                || material == Material.HONEY_BOTTLE) {
-            return new ItemStack(Material.GLASS_BOTTLE);
+        for (String suffix : settings.bucketSuffixes()) {
+            if (materialName.endsWith(suffix)) return new ItemStack(Material.BUCKET);
         }
+        if (settings.bottleMaterialNames().contains(materialName)) return new ItemStack(Material.GLASS_BOTTLE);
         return null;
     }
 
-    private void updateDispenserInventory(Block dispenserBlock, ItemStack consumedItem, ItemStack resultItem) {
-        updateDispenserInventory(dispenserBlock, consumedItem, resultItem, false);
-    }
-
     private void updateDispenserInventory(Block dispenserBlock, ItemStack consumedItem, ItemStack resultItem,
-                                          boolean dropResult) {
+                                          boolean dropResult, PluginSettings settings) {
         Dispenser dispenser = (Dispenser) dispenserBlock.getState();
         Inventory inventory = dispenser.getInventory();
         plugin.getBlockedInventories().add(inventory);
@@ -136,17 +142,18 @@ public class BlockDispenseListener implements Listener {
                 if (!removeOneSimilarItem(inventory, consumedItem)) return;
                 if (resultItem != null) {
                     if (dropResult) {
-                        dispenser.getWorld().dropItem(dispenser.getLocation().add(0.5, -0.75, 0.5), resultItem);
+                        dispenser.getWorld().dropItem(dispenser.getLocation().add(
+                                settings.dropOffsetX(), settings.dropOffsetY(), settings.dropOffsetZ()), resultItem);
                         return;
                     }
                     Map<Integer, ItemStack> leftovers = inventory.addItem(resultItem);
                     leftovers.values().forEach(item -> dispenser.getWorld().dropItem(
-                            dispenser.getLocation().add(0.5, -0.75, 0.5), item));
+                            dispenser.getLocation().add(settings.dropOffsetX(), settings.dropOffsetY(), settings.dropOffsetZ()), item));
                 }
             } finally {
                 plugin.getBlockedInventories().remove(inventory);
             }
-        }, 1L);
+        }, settings.deferredInventoryDelayTicks());
     }
 
     private boolean removeOneSimilarItem(Inventory inventory, ItemStack consumedItem) {

@@ -14,6 +14,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ public final class DistillationListener implements Listener {
 
     private final CauldronInteract plugin;
     private final Set<Block> stands = new HashSet<>();
+    private BukkitTask watcherTask;
 
     public DistillationListener(CauldronInteract plugin) {
         this.plugin = plugin;
@@ -35,17 +37,30 @@ public final class DistillationListener implements Listener {
                 trackChunk(chunk);
             }
         }
-        Bukkit.getScheduler().runTaskTimer(plugin, this::checkStands, 10L, 10L);
+        long interval = plugin.getSettings().distillationCheckIntervalTicks();
+        long delay = plugin.getSettings().distillationInitialDelayTicks();
+        watcherTask = Bukkit.getScheduler().runTaskTimer(plugin, this::checkStands, delay, interval);
+    }
+
+    public void stopWatching() {
+        if (watcherTask != null) {
+            watcherTask.cancel();
+            watcherTask = null;
+        }
+        stands.clear();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onChunkLoad(ChunkLoadEvent event) {
-        trackChunk(event.getChunk());
+        if (plugin.getSettings().distillationChunkLoadEnabled()) {
+            trackChunk(event.getChunk());
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (event.getBlockPlaced().getType() == Material.BREWING_STAND) {
+        if (plugin.getSettings().distillationBlockPlaceEnabled()
+                && event.getBlockPlaced().getType() == Material.BREWING_STAND) {
             stands.add(event.getBlockPlaced());
         }
     }
@@ -69,7 +84,7 @@ public final class DistillationListener implements Listener {
                 iterator.remove();
                 continue;
             }
-            BreweryIntegration.startDistillation((BrewingStand) block.getState());
+            BreweryIntegration.startDistillation((BrewingStand) block.getState(), plugin.getSettings().distillationIngredient());
         }
     }
 }

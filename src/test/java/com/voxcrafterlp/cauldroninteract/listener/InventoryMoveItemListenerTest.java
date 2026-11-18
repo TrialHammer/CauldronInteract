@@ -48,6 +48,7 @@ class InventoryMoveItemListenerTest {
                 mock(Registry.class, withSettings().mockMaker(MockMakers.PROXY)));
         brewery = mockStatic(BreweryIntegration.class);
         when(plugin.getBlockedInventories()).thenReturn(new HashSet<>());
+        when(plugin.getSettings()).thenReturn(TestPluginSettings.create());
         when(inventory.getHolder()).thenReturn(stand);
         when(stand.getBlock()).thenReturn(block);
         when(block.getType()).thenReturn(Material.BREWING_STAND);
@@ -72,7 +73,7 @@ class InventoryMoveItemListenerTest {
 
         pendingTask().run();
 
-        brewery.verify(() -> BreweryIntegration.startDistillation(stand));
+        brewery.verify(() -> BreweryIntegration.startDistillation(eq(stand), any()));
         listener.onBrewerInput(input(Material.BLAZE_POWDER));
         verify(scheduler, times(2)).runTaskLater(eq(plugin), any(Runnable.class), eq(1L));
     }
@@ -94,7 +95,7 @@ class InventoryMoveItemListenerTest {
 
         pendingTask().run();
 
-        brewery.verify(() -> BreweryIntegration.startDistillation(stand));
+        brewery.verify(() -> BreweryIntegration.startDistillation(eq(stand), any()));
     }
 
     @Test
@@ -109,7 +110,7 @@ class InventoryMoveItemListenerTest {
 
         pendingTask().run();
 
-        brewery.verify(() -> BreweryIntegration.startDistillation(stand));
+        brewery.verify(() -> BreweryIntegration.startDistillation(eq(stand), any()));
     }
 
     @Test
@@ -121,7 +122,7 @@ class InventoryMoveItemListenerTest {
 
         pendingTask().run();
 
-        brewery.verify(() -> BreweryIntegration.startDistillation(stand));
+        brewery.verify(() -> BreweryIntegration.startDistillation(eq(stand), any()));
     }
 
     @Test

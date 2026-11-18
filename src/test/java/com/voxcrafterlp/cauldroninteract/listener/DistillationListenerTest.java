@@ -5,6 +5,7 @@ import com.voxcrafterlp.cauldroninteract.CauldronInteract;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
+import org.bukkit.Registry;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import org.mockito.MockMakers;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -48,6 +50,9 @@ class DistillationListenerTest {
         bukkit.when(Bukkit::getWorlds).thenReturn(List.of(world));
         bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
         bukkit.when(Bukkit::getLogger).thenReturn(Logger.getAnonymousLogger());
+        bukkit.when(() -> Bukkit.getRegistry(any())).thenAnswer(call ->
+                mock(Registry.class, withSettings().mockMaker(MockMakers.PROXY)));
+        when(plugin.getSettings()).thenReturn(TestPluginSettings.create());
         PluginManager manager = mock(PluginManager.class);
         Plugin brewery = mock(Plugin.class);
         bukkit.when(Bukkit::getPluginManager).thenReturn(manager);

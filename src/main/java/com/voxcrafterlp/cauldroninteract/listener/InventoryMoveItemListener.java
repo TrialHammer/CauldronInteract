@@ -37,6 +37,8 @@ public class InventoryMoveItemListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBrewerInput(InventoryMoveItemEvent event) {
+        if (!plugin.getSettings().distillationEnabled()) return;
+
         Inventory inventory = event.getDestination();
         Block block;
         if (inventory.getHolder() instanceof BrewingStand stand) {
@@ -58,13 +60,13 @@ public class InventoryMoveItemListener implements Listener {
         pendingDistillers.put(block, transfers);
 
         // InventoryMoveItemEvent runs before the transfer. Read the actual stand
-        // next tick, including inputs of glowstone/fuel after the brew itself.
+        // next tick, including inputs of the configured distillation ingredient after the brew itself.
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             pendingDistillers.remove(block);
             if (transfers.stream().allMatch(InventoryMoveItemEvent::isCancelled)
                     || !block.getWorld().isChunkLoaded(block.getX() >> 4, block.getZ() >> 4)
                     || block.getType() != Material.BREWING_STAND) return;
-            BreweryIntegration.startDistillation((BrewingStand) block.getState());
-        }, 1L);
+            BreweryIntegration.startDistillation((BrewingStand) block.getState(), plugin.getSettings().distillationIngredient());
+        }, plugin.getSettings().deferredInventoryDelayTicks());
     }
 }

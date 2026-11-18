@@ -62,6 +62,7 @@ class BlockDispenseListenerTest {
             }));
         });
         when(plugin.getBlockedInventories()).thenReturn(new HashSet<>());
+        when(plugin.getSettings()).thenReturn(TestPluginSettings.create());
         when(dispenserBlock.getType()).thenReturn(Material.DISPENSER);
         Directional facing = mock(Directional.class);
         when(facing.getFacing()).thenReturn(BlockFace.NORTH);

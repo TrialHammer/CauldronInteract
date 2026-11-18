@@ -1,7 +1,17 @@
 name: CauldronInteract
-version: 1.4.1
-api-version: 1.17
+version: '${project.version}'
+api-version: '26.3'
 authors: [VoxCrafter_LP, savagetricycle]
 main: com.voxcrafterlp.cauldroninteract.CauldronInteract
 description: Adds dispenser cauldron interactions and hopper distillation for BreweryX
 softdepend: [BreweryX]
+commands:
+  cauldroninteract:
+    description: Reloads configuration or shows plugin status.
+    usage: /cauldroninteract <reload|status>
+    permission: cauldroninteract.admin
+    aliases: [ci]
+permissions:
+  cauldroninteract.admin:
+    description: Allows reloading CauldronInteract and viewing its status.
+    default: op

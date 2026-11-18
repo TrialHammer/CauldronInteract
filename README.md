@@ -1,98 +1,51 @@
 # CauldronInteract
 
-CauldronInteract 是一个面向 [BreweryX](https://github.com/BreweryTeam/BreweryX) 的 Minecraft 服务端插件，支持使用发射器为炼药锅加水、投料和装瓶，以及通过漏斗自动启动蒸馏。
+CauldronInteract 为 [BreweryX](https://github.com/BreweryTeam/BreweryX) 提供自动化炼药锅与蒸馏流程：
+发射器加水、投料、装瓶，以及通过漏斗向酿造台输入后自动启动 BreweryX 蒸馏。
 
 ## 功能
 
 - 自动装瓶：使用玻璃瓶从 BreweryX 炼药锅中提取酒液。
-- 自动投料：向装水的炼药锅投入 BreweryX 支持的原料，使用后返还相应的空容器。
-- 自动加水：使用水桶将空炼药锅或未满的水炼药锅补满。
-- 漏斗蒸馏：酿造台通过漏斗收到物品后，自动检查并启动 BreweryX 蒸馏流程。后续输入不会重置蒸馏计时。
-- 发射器升级：可通过配置要求发射器先升级，再使用上述炼药锅交互功能。
+- 自动投料：向装水的炼药锅投入 BreweryX 支持的原料，并按配置返还空容器。
+- 自动加水：使用水桶补满空炼药锅或未满炼药锅。
+- 漏斗蒸馏：酿造台通过漏斗收到原料后自动启动或继续 BreweryX 蒸馏。
+- 发射器升级：可选要求发射器先由玩家用锄头升级。
+- `/cauldroninteract reload|status`（别名 `/ci`）：热重载配置并查看功能开关。
 
-蒸馏配方、时间和产物提取限制由 BreweryX 管理。
+蒸馏配方、时间和产物提取限制仍由 BreweryX 管理。
 
 ## 运行环境
 
-- 提供兼容 Spigot API 的 Minecraft 服务端。当前项目使用 `1.21.11-R0.2-SNAPSHOT` 编译。
-- 已安装并启用的 BreweryX 插件。
-- 满足服务端要求的 Java 版本。本插件的编译目标为 Java 17。
-
-## 安装
-
-1. 按照[构建说明](#构建)生成插件 JAR。
-2. 将 `build/libs/CauldronInteract-1.4.1-RELEASE.jar` 放入已安装 BreweryX 的服务器的 `plugins/` 目录。
-3. 重启服务器，首次启动会生成 `plugins/CauldronInteract/config.yml`。
-4. 按需修改配置，再重启服务器使其生效。
-
-## 使用
-
-将发射器朝向炼药锅，放入水桶、酿造原料或玻璃瓶，再使用红石信号触发。
-
-- 加水时，炼药锅会补满至 3 格，空桶掉落在发射器下方；炼药锅已满时，水桶留在发射器中。补水会清除炼药锅中已有的 BreweryX 酒液数据。
-- 装瓶仅适用于 BreweryX 已记录的炼药锅。酒液和投料后返还的空容器放回发射器，空间不足时掉落在其下方。
-- 蒸馏时，在普通酿造台的原料槽中放入荧石粉，再通过漏斗向瓶槽输入饮品。插件每 0.5 秒检查已加载的酿造台，具备可蒸馏的酒液和荧石粉后自动启动 BreweryX 蒸馏，保留原有动画和计时。
-
-本版本专注于 BreweryX 自动酿造，不包含上游的智能发射器和自动取岩浆功能。
-
-BreweryX 版本不兼容时，相关操作会跳过，并在服务器日志中记录警告。
-
-## 配置
-
-```yaml
-# 是否要求发射器先升级
-enable-dispenser-upgrade: false
-```
-
-默认值为 `false`，所有发射器均可使用。设置为 `true` 后，玩家需要手持任意锄头，潜行并右键发射器进行升级。升级会播放音效和粒子，非创造模式下消耗 1 点锄头耐久。关闭再开启此选项后，已有的升级标记仍然有效。
+- Paper 26.3（`paper-api 26.3.build.254-stable`）
+- Java 21+
+- 已安装并启用的 BreweryX
 
 ## 构建
 
-构建需要 JDK 25。项目提供 Gradle Wrapper，首次构建会下载 Gradle 和依赖。
-
-在项目目录中执行以下命令。
-
-Linux / macOS：
+项目由 Maven 管理：
 
 ```bash
-bash gradlew clean build
+mvn clean package
 ```
 
-Windows：
-
-```bat
-gradlew.bat clean build
-```
-
-构建产物位于 `build/libs/`。JAR 中的 `META-INF/` 目录包含许可证和 README。
-
-## 测试
-
-`build` 任务包含测试，也可以单独运行：
+产物：`target/CauldronInteract-1.5.0-26.3.jar`。测试：
 
 ```bash
-# Linux / macOS
-bash gradlew test
+mvn test
 ```
 
-```bat
-:: Windows
-gradlew.bat test
-```
+## 配置
 
-测试报告位于 `build/reports/tests/test/index.html`。
+所有可调项位于 `plugins/CauldronInteract/config.yml`，玩家可见文本位于 `messages.yml`。
+`config.yml` 覆盖：
 
-## 项目来源
+- `features.*`：加水、装瓶、投料、发射器升级、蒸馏、检测周期。
+- `behaviour.*`：输入延迟、空容器返还、补水方式、瓶/桶材料匹配。
+- `effects.*`：音效、粒子及音量/音调。
+- `messages.yml`：命令、状态、升级提示等所有文本。
 
-本项目基于 [VoxCrafterLP/CauldronInteract](https://github.com/VoxCrafterLP/CauldronInteract) 修改，原作者为 VoxCrafter_LP。
+## 从上游/旧版迁移
 
-修改版说明（2026-10-08）：调整炼药锅交互逻辑，集成 BreweryX 自动投料、酒液装瓶和漏斗蒸馏，并精简原版功能及配置。
-
-## 贡献者
-
-- [VoxCrafter_LP](https://github.com/VoxCrafterLP)：原项目作者。
-- savagetricycle：贡献者。
-
-## 许可证
-
-本项目沿用上游的 GNU General Public License v3.0（GPL-3.0）许可证，完整条款见 [LICENSE](LICENSE)。
+旧配置键 `enable-dispenser-upgrade` 仍可读取；新配置请使用
+`features.dispenser-upgrade.enabled`。旧版 Gradle 项目已迁移到 Maven，Gradle
+构建文件不再参与发布流程。

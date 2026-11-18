@@ -97,8 +97,12 @@ public final class BreweryIntegration {
      * running distillers are left alone so successive hopper inputs do not reset
      * progress. BreweryX retains control over recipes, duration and output locks.
      */
-    @SuppressWarnings("unchecked")
     public static void startDistillation(BrewingStand stand) {
+        startDistillation(stand, Material.GLOWSTONE_DUST);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void startDistillation(BrewingStand stand, Material configuredIngredient) {
         Plugin brewery = Bukkit.getPluginManager().getPlugin(BREWERY_PLUGIN_NAME);
         if (brewery == null || !brewery.isEnabled()) return;
 
@@ -110,7 +114,10 @@ public final class BreweryIntegration {
 
             BrewerInventory inventory = stand.getInventory();
             ItemStack ingredient = inventory.getIngredient();
-            if (ingredient == null || ingredient.getType() != Material.GLOWSTONE_DUST) return;
+            // Keep BreweryX's standard glowstone requirement as a compatible
+            // default while allowing servers to use a different distill trigger.
+            if (ingredient == null || (ingredient.getType() != Material.GLOWSTONE_DUST
+                    && ingredient.getType() != configuredIngredient)) return;
             Object contents = distillerClass.getMethod("getDistillContents", BrewerInventory.class)
                     .invoke(null, inventory);
             Number hasBrew = (Number) distillerClass.getMethod("hasBrew", BrewerInventory.class, contents.getClass())
