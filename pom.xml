@@ -6,16 +6,18 @@
 
     <groupId>com.voxcrafterlp</groupId>
     <artifactId>CauldronInteract</artifactId>
-    <version>1.5.0-26.3</version>
+    <version>1.5.0</version>
     <packaging>jar</packaging>
 
     <name>CauldronInteract</name>
-    <description>Dispenser cauldron interactions and hopper distillation for BreweryX on Minecraft 26.3.</description>
+    <description>Dispenser cauldron interactions and hopper distillation for BreweryX on Paper 26.3 and 1.21.x.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
-        <spigot.version>26.3-R0.1-SNAPSHOT</spigot.version>
+        <paper.version>26.3</paper.version>
+        <paper.api-version>26.3</paper.api-version>
+        <spigot.version>${paper.version}-R0.1-SNAPSHOT</spigot.version>
         <junit.version>5.13.4</junit.version>
         <mockito.version>5.24.0</mockito.version>
     </properties>
@@ -55,7 +57,7 @@
     </dependencies>
 
     <build>
-        <finalName>CauldronInteract-${project.version}</finalName>
+        <finalName>CauldronInteract-${project.version}-${paper.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -87,7 +89,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Version>${project.version}-${paper.version}</Implementation-Version>
                         </manifestEntries>
                     </archive>
                 </configuration>

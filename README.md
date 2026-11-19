@@ -16,19 +16,26 @@ CauldronInteract 为 [BreweryX](https://github.com/BreweryTeam/BreweryX) 提供�
 
 ## 运行环境
 
-- Paper 26.3（`paper-api 26.3.build.254-stable`）
+- Paper 26.3 或 Paper 1.21.11（兼容整个 Paper 1.21.x 系列）
 - Java 21+
 - 已安装并启用的 BreweryX
 
 ## 构建
 
-项目由 Maven 管理：
+项目由 Maven 管理，并提供双目标构建脚本：
 
 ```bash
-mvn clean package
+bash scripts/build.sh                     # Paper 26.3，默认
+PAPER_API_VERSION=1.21.11 bash scripts/build.sh
 ```
 
-产物：`target/CauldronInteract-1.5.0-26.3.jar`。测试：
+产物写入 `dist/CauldronInteract-1.5.0-<Paper版本>.jar`，例如
+`dist/CauldronInteract-1.5.0-26.3.jar` 和
+`dist/CauldronInteract-1.5.0-1.21.11.jar`。1.21.x 产物声明
+`api-version: 1.21`，同一个 jar 可加载到 1.21.1 至 1.21.11；26.3 产物声明
+`api-version: 26.3`。
+
+直接执行 `mvn clean package` 仍会构建默认的 Paper 26.3 版本。测试：
 
 ```bash
 mvn test

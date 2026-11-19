@@ -7,3 +7,6 @@ target/
 
 # Bundled server APIs required for Maven compilation
 !libs/*.jar
+
+# Generated release artifacts
+dist/
